@@ -1,0 +1,122 @@
+
+---
+title: 'Demo of DIRECT-NET using parallel scATAC-seq data of human GM12878 cell line'
+author: "Lihua Zhang"
+date: "`r format(Sys.time(), '%d/%m/%y')`"
+output:
+  html_document: default
+mainfont: Arial
+vignette: |
+  %\VignetteIndexEntry{Inferring CREs and reconstructing regulatory networks from single cell multi-omics data} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  root.dir = './'
+)
+```
+
+We showcase DIRECT-NET’s capability of inferring CREs by applying it to scATAC-seq data of human GM12878 cell line. 
+
+To make it easy to run DIRECT-NET in most common parallel scRNA-seq and scATAC-seq data or scATAC-seq data analysis pipelines, the implementent of DIRECT-NET is seamlessly compatible with the workflow of Seurat/Signac package. In sum, DIRECT-NET pipeline consists of the following four major parts:
+
+* Set up a Seurat object
+
+* Infer links using DIRECT-NET by taking an input a Seurat object
+
+* Visualize the links
+
+* Construct regulatory networks
+
+DIRECT-NET's workflow closely follows the Seurat vignette: [https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis.html](https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis.html)
+
+## Load the required libraries
+```{r message=FALSE,warning=FALSE}
+library(DIRECTNET)
+library(Signac)
+library(Seurat)
+library(S4Vectors)
+library(patchwork)
+library(Matrix)
+library(data.table)
+options(stringsAsFactors = FALSE)
+set.seed(123)
+```
+
+## Load data
+The scATAC-seq datasets we demonstrated here, including count data matrix of GM12878, can be downloaded via this shared Google Drive [link](https://drive.google.com/drive/folders/1--kXLO7FS5mRN5-aVjPV6WmS4Dcos4b3?usp=sharing).
+
+```{r}
+load("/Users/lihuazhang/Documents/DIRECT-NET/GM12878/Data/GM12878.filtered.cells.used.for.linkage.analysis.RData")
+atac.counts <- t(as.matrix(mat_ct_filtered))
+features.rna <- read.table(file = "/Users/lihuazhang/Documents/DIRECT-NET/GM12878/Data/GM12878_hvg.txt")
+features.rna <- features.rna$x
+focus_markers <- features.rna
+
+genome.info <- read.table(file = "/Users/lihuazhang/Documents/DIRECT-NET/GM12878/Data/hg19.promoter.regions.txt")
+names(genome.info) <- c("Chrom","Starts","Ends","genes")
+genes <- lapply(genome.info$genes, function(x) strsplit(x,"[|]")[[1]][1])
+genes <- lapply(genes, function(x) strsplit(x,"[.]")[[1]][1])
+genes <- unlist(genes)
+genome.info$genes <- genes
+unik <- !duplicated(genes)# filter out different transcript
+genome.info <- genome.info[unik,]
+
+peak <- rownames(atac.counts)
+peak1 <- strsplit(peak,"_")
+peaks <- matrix(0, nrow = length(peak),ncol = 1)
+for (i in 1:length(peaks)) {
+  peaks[i] <- paste0(peak1[[i]][1],":",peak1[[i]][2],"-",peak1[[i]][3])
+}
+rownames(atac.counts) <- as.vector(peaks)
+
+```
+
+# Part I: Set up a Seurat object
+```{r, warning=FALSE}
+sci <- CreateSeuratObject(
+  counts = atac.counts,
+  assay = "ATAC"
+)
+
+```
+
+### ATAC analysis
+```{r}
+# We exclude the first dimension as this is typically correlated with sequencing depth
+sci <- RunTFIDF(sci)
+sci <- FindTopFeatures(sci, min.cutoff = 50)
+sci <- RunSVD(sci)
+DepthCor(sci)
+sci <- RunUMAP(sci, reduction = 'lsi', dims = 2:30)
+sci
+sci <- FindNeighbors(object = sci, reduction = 'lsi', dims = 2:30)
+sci <- FindClusters(object = sci, verbose = FALSE, algorithm = 3, resolution = 0.2)
+#DimPlot(object = sci, label = TRUE) + NoLegend()
+
+```
+
+# Part II: Infer CREs using DIRECT-NET
+```{r,warning=FALSE}
+sci <- Run_DIRECT_NET(sci, k_neigh = 50, atacbinary = TRUE, max_overlap=0.5, size_factor_normalize = TRUE, genome.info, focus_markers = focus_markers[1:5])
+direct.net_result <- Misc(sci, slot = 'direct.net')
+direct.net_result <- as.data.frame(do.call(cbind,direct.net_result))
+
+```
+
+# Part III: Visualize the links
+```{r,warning=FALSE}
+temp <- tempfile()
+download.file("ftp://ftp.ensembl.org/pub/release-65/gtf/homo_sapiens/Homo_sapiens.GRCh37.65.gtf.gz", temp)
+gene_anno <- rtracklayer::readGFF(temp)
+unlink(temp)
+# rename some columns to match requirements
+gene_anno$chromosome <- paste0("chr", gene_anno$seqid)
+gene_anno$gene <- gene_anno$gene_id
+gene_anno$transcript <- gene_anno$transcript_id
+gene_anno$symbol <- gene_anno$gene_name
+marker <- focus_markers[1]
+Plot_connections(direct.net_result, gene_anno, marker)
+```
