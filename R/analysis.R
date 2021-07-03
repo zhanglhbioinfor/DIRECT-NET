@@ -121,8 +121,10 @@ generate_CRE_Gene_links <- function(direct.net_result, markers) {
     marker1<- markers[markers$group == uniqgroups[i],]
     marker_gene <- as.character(marker1$gene)
     effctive_id <- which(direct.net_result_CRE$gene %in% marker_gene)
-    L_G_record[[i]] <- data.frame(loci = direct.net_result_CRE$Peak2[effctive_id], gene = direct.net_result_CRE$gene[effctive_id])
-    P_L_G_record[[i]] <- data.frame(loci = direct.net_result_CRE$Peak1[effctive_id], gene = direct.net_result_CRE$gene[effctive_id])
+    L_G_i <- data.frame(loci = direct.net_result_CRE$Peak2[effctive_id], gene = direct.net_result_CRE$gene[effctive_id])
+    L_G_record[[i]] <- L_G_i[!duplicated(L_G_i), , drop = FALSE]
+    P_L_G_i <- data.frame(loci = direct.net_result_CRE$Peak1[effctive_id], gene = direct.net_result_CRE$gene[effctive_id])
+    P_L_G_record[[i]] <- P_L_G_i[!duplicated(P_L_G_i), , drop = FALSE]
   }
   CRE_Gene <- list()
   CRE_Gene$distal <- L_G_record
@@ -191,7 +193,7 @@ generate_CRE <- function(L_G_record, P_L_G_record, da_peaks_list) {
       peaks_bed <- as.data.frame(peaks_bed)
       peaks_bed$R.start <- as.numeric(peaks_bed$R.start)
       peaks_bed$R.end <- as.numeric(peaks_bed$R.end)
-      P_peaks_bed_record[[i]] <- peaks_bed
+      P_peaks_bed_record[[i]] <- peaks_bed[!(duplicated(peaks_bed)), , drop = FALSE]
     }
   }
   CREs <- list()
