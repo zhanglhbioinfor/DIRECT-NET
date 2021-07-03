@@ -1,0 +1,32 @@
+Package: DIRECTNET
+Type: Package
+Title: Inferring CREs and reconstructing regulatory networks from single cell multi-omics data
+Version: 0.0.1
+Author: Lihua Zhang
+Maintainer: Lihua Zhang <zhanglihua@amss.ac.cn>
+Description: R tookit for inferring CREs and reconstructing regulatory networks from single cell multi-omics data.
+Depends: R (>= 3.6.0)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports:
+    Matrix,
+    stats,
+    FNN,
+    slam,
+    xgboost,
+    ggplot2,
+    patchwork,
+    Seurat (>= 4.0),
+    Signac,
+    cicero,
+    GenomicRanges,
+    stringr,
+    chromVAR,
+    motifmatchr,
+    GenomicRanges,
+    RColorBrewer
+Suggests:
+    rmarkdown, knitr, roxygen2
+RoxygenNote: 7.1.1
+VignetteBuilder: knitr
