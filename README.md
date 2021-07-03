@@ -21,7 +21,7 @@ The implementent of DIRECT-NET is now seamlessly compatible with the workflow of
 
 ## Examples
 
-- [Demo of DIRECT-NET on scATAC-seq data of GM12878](https://github.com/amsszlh/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_GM12878.html)
+- [Demo of DIRECT-NET on scATAC-seq data of GM12878](https://htmlpreview.github.io/?https://github.com/amsszlh/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_GM12878.html)
 
 - [Demo of DIRECT-NET on scATAC-seq data of human Brain](https://htmlpreview.github.io/?https://github.com/amsszlh/scMC/blob/master/tutorial/demo_scMC_Seurat_Wrapper_dermis.html)
 
