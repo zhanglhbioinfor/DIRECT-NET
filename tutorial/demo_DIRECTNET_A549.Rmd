@@ -197,7 +197,7 @@ P_L_TF_record <- generate_peak_TF_links(peaks_bed_list = Focused_CREs$promoter, 
 network_links <- generate_links_for_Cytoscape(L_G_record = CREs_Gene$distal, L_TF_record, P_L_G_record = CREs_Gene$promoter, P_L_TF_record,groups)
 ```
 
-# Ouput Node character
+# Ouput Node attribute
 ```{r, message=FALSE,warning=FALSE}
-Node_character <- generate_node_for_Cytoscape(network_links,markers)
+Node_attribute <- generate_node_for_Cytoscape(network_links,markers)
 ```

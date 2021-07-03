@@ -1,0 +1,190 @@
+
+---
+title: 'Demo of DIRECT-NET using scATAC-seq data of human Brain'
+author: "Lihua Zhang"
+date: "`r format(Sys.time(), '%d/%m/%y')`"
+output:
+  html_document: default
+mainfont: Arial
+vignette: |
+  %\VignetteIndexEntry{Inferring CREs and reconstructing regulatory networks from single cell multi-omics data} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  root.dir = './'
+)
+```
+
+We showcase DIRECT-NET’s capability of inferring CREs by applying it to scATAC-seq data of human Brain. 
+
+To make it easy to run DIRECT-NET in most common parallel scRNA-seq and scATAC-seq data or scATAC-seq data analysis pipelines, the implementent of DIRECT-NET is seamlessly compatible with the workflow of Seurat/Signac package. In sum, DIRECT-NET pipeline consists of the following four major parts:
+
+* Set up a Seurat object
+
+* Infer links using DIRECT-NET by taking an input a Seurat object
+
+* Visualize the links
+
+* Construct regulatory networks
+
+DIRECT-NET's workflow closely follows the Seurat vignette: [https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis.html](https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis.html)
+
+## Load the required libraries
+```{r message=FALSE,warning=FALSE}
+library(DIRECTNET)
+library(Seurat)
+library(Signac)
+library(EnsDb.Hsapiens.v86)
+library(patchwork)
+library(dplyr)
+library(ggplot2)
+options(stringsAsFactors = FALSE)
+```
+
+## Load data
+The scATAC-seq datasets we demonstrated here can be downloaded via this shared Google Drive [link](https://drive.google.com/drive/folders/1ff3HD7x_Rv5v1y1zhbZDqjMeXMJDMnaU?usp=sharing).
+
+```{r}
+library(SummarizedExperiment)
+Data <- readRDS(file = "/Users/suoqinjin/Downloads/DIRECTNET/Brain/Data/GSE147672_200324_Brain_scATAC_SummarizedExperiment_forGEO")
+counts <- assay(Data, "counts")
+counts <- counts[which(rowSums(counts) > 1000),]
+meta = as.data.frame(colData(Data))
+# import low dimension data and cluster information
+library(readxl)
+Umap_info <- read_excel("/Users/suoqinjin/Downloads/DIRECTNET/Brain/Data/41588_2020_721_MOESM5_ESM.xlsx",skip = 21)
+#head(Umap_info)
+cell_coord <- cbind(Umap_info$UMAP_dim1,Umap_info$UMAP_dim2)
+#head(cell_coord)
+rownames(cell_coord) <- paste0("scATAC_CTRL_",Umap_info$Region,"_",Umap_info$Donor_ID,"#",Umap_info$`10x_SingleCell_Barcode`,"-1")
+colnames(cell_coord) <- c("UMAP_1","UMAP_2")
+index <- match(colnames(counts),rownames(cell_coord))
+identical(colnames(counts),rownames(cell_coord)[index])
+cell_coord <- cell_coord[index,]
+identical(colnames(counts),rownames(cell_coord))
+group0 <- Umap_info$Cluster[index]
+#unique(group0)
+# based on original nature genetics paper (https://www.nature.com/articles/s41588-020-00721-x)
+group <- c('Striatal inhibitory 1', "Oligodendrocytes 2",'Striatal inhibitory 2',"Oligodendrocytes 1","unclassified","Oligodendrocytes 4","Isocortical exitatory","OPCs 2","unclassified","Oligodendrocytes 5","Microglia","unclassified","Oligodendrocytes 3","OPCs 1","unclassified","Hippocampal exitatory 2","Isocortical astrocytes","Striatal astrocytes","Hippocampal exitatory 1","Isocortical astrocytes","unclassified",'Isocortical inhibitory',"unclassified","Nigral OPCs")
+group_new <- plyr::mapvalues(group0, from = unique(group0), to = group)
+#group_new
+index <- which(group_new != "unclassified")
+counts <- counts[,index]
+meta <- meta[index,]
+meta$celltype <- group_new[index]
+
+genome.info <- read.table(file = "/Users/suoqinjin/Downloads/DIRECTNET/Brain/Data/hg38.promoter.regions.txt")
+names(genome.info) <- c("Chrom","Starts","Ends","genes")
+genes <- lapply(genome.info$genes, function(x) strsplit(x,"[|]")[[1]][1])
+genes <- lapply(genes, function(x) strsplit(x,"[.]")[[1]][1])
+genes <- unlist(genes)
+genome.info$genes <- genes
+unik <- !duplicated(genes)# filter out different transcript
+genome.info <- genome.info[unik,]
+
+markers <- read.table("/Users/suoqinjin/Downloads/DIRECTNET/Brain/Data/Brain_markers.txt", sep = "\t")
+markers <- data.frame(gene = markers$gene, group = markers$cluster)
+c <- unique(markers$group)
+marker_list <- list()
+for (i in 1:length(c)) {
+  marker1<- markers[markers$group == c[i],]
+  marker_list[[i]] <- as.character(marker1$gene)
+}
+
+markers_all <- unique(unlist(marker_list))
+focus_markers <- markers_all
+```
+
+# Part I: Set up a Seurat object
+```{r, warning=FALSE}
+combined <- CreateSeuratObject(
+  counts = counts,
+  meta.data = meta,
+  assay = "ATAC"
+)
+
+```
+
+### ATAC analysis
+```{r}
+# We exclude the first dimension as this is typically correlated with sequencing depth
+combined <- RunTFIDF(combined)
+combined <- FindTopFeatures(combined, min.cutoff = 50)
+combined <- RunSVD(combined)
+DepthCor(combined)
+combined <- RunUMAP(combined, reduction = 'lsi', dims = 2:30)
+Idents(combined) <- combined$celltype
+combined@reductions$umap@cell.embeddings <- cell_coord
+
+```
+
+# Part II: Infer CREs using DIRECT-NET
+```{r,message=FALSE,warning=FALSE}
+combined <- Run_DIRECT_NET(combined, k_neigh = 50, atacbinary = TRUE, max_overlap=0.5, size_factor_normalize = TRUE, genome.info, focus_markers = "FEV")
+direct.net_result <- Misc(combined, slot = 'direct.net')
+direct.net_result <- as.data.frame(do.call(cbind,direct.net_result))
+# We have run DIRECT-NET on all markers, load the results for downstream network analysis
+load("/Users/suoqinjin/Downloads/DIRECTNET/Brain/Data/Brain_direct.net.RData")
+```
+
+# Part III: Visualize the links
+```{r,warning=FALSE}
+temp <- tempfile()
+download.file("ftp://ftp.ensembl.org/pub/release-100/gtf/homo_sapiens/Homo_sapiens.GRCh38.100.gtf.gz", temp)
+gene_anno <- rtracklayer::readGFF(temp)
+unlink(temp)
+# rename some columns to match requirements
+gene_anno$chromosome <- paste0("chr", gene_anno$seqid)
+gene_anno$gene <- gene_anno$gene_id
+gene_anno$transcript <- gene_anno$transcript_id
+gene_anno$symbol <- gene_anno$gene_name
+Plot_connections(direct.net_result, gene_anno, marker = "FEV", cutoff = 0.2)
+```
+
+# Part IV: Construct regulatory networks
+# identify differential accessible peaks, here we focus on Striatal inhibitory 1 and Striatal inhibitory 2
+```{r, message=FALSE,warning=FALSE}
+### identify differential accessible peaks (DA)
+DefaultAssay(combined) <- 'ATAC'
+focused_markers <- markers[which(markers$group %in% c("Striatal inhibitory 1", "Striatal inhibitory 2")), , drop = FALSE]
+groups <- unique(focused_markers$group)
+da_peaks_list <- list()
+for (i in 1:length(groups)) {
+  print(i)
+  da_peaks <- FindMarkers(
+    object = combined,
+    min.pct = 0.2,
+    ident.1 = groups[i],
+    group.by = "celltype",
+    test.use = 'LR'
+  )
+  da_peaks_list[[i]] <- da_peaks
+}
+```
+
+# Detect CRE-TF connections
+```{r, message=FALSE,warning=FALSE}
+# CRE-gene connections
+CREs_Gene <- generate_CRE_Gene_links(direct.net_result, markers = focused_markers)
+# Find focused CREs which is overlapped with DA
+Focused_CREs <- generate_CRE(L_G_record = CREs_Gene$distal, P_L_G_record = CREs_Gene$promoter, da_peaks_list)
+# detect TFs for distal CREs
+library(BSgenome.Hsapiens.UCSC.hg38)
+L_TF_record <- generate_peak_TF_links(peaks_bed_list = Focused_CREs$distal, species="Homo sapiens", genome = BSgenome.Hsapiens.UCSC.hg38, markers = focused_markers)
+# detect TFs for Promoters
+P_L_TF_record <- generate_peak_TF_links(peaks_bed_list = Focused_CREs$promoter, species="Homo sapiens", genome = BSgenome.Hsapiens.UCSC.hg38, markers = focused_markers)
+
+```
+
+# Output TF-gene connections
+```{r, message=FALSE,warning=FALSE}
+network_links <- generate_links_for_Cytoscape(L_G_record = CREs_Gene$distal, L_TF_record, P_L_G_record = CREs_Gene$promoter, P_L_TF_record,groups)
+```
+
+# Ouput Node attribute
+```{r, message=FALSE,warning=FALSE}
+Node_attribute <- generate_node_for_Cytoscape(network_links,markers = focused_markers)
+```
