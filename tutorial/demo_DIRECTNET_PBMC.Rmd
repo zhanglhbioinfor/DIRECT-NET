@@ -214,10 +214,11 @@ for (i in 1:length(groups)) {
   da_peaks <- FindMarkers(
     object = pbmc,
     min.pct = 0.2,
-    logfc.threshold = 1,
+    logfc.threshold = 0.6,
     ident.1 = groups[i],
     group.by = "celltype",
-    test.use = 'LR'
+    test.use = 'LR',
+    only.pos = TRUE
   )
   da_peaks_list[[i]] <- da_peaks
 }
@@ -239,7 +240,7 @@ P_L_TF_record <- generate_peak_TF_links(peaks_bed_list = Focused_CREs$promoter, 
 
 # Output TF-gene connections
 ```{r, message=FALSE,warning=FALSE}
-network_links <- generate_links_for_Cytoscape(L_G_record = CREs_Gene$distal, L_TF_record, P_L_G_record = CREs_Gene$promoter, P_L_TF_record,groups)
+network_links <- generate_links_for_Cytoscape(L_G_record = Focused_CREs$L_G_record, L_TF_record, P_L_G_record = Focused_CREs$P_L_G_record, P_L_TF_record,groups)
 ```
 
 # Ouput Node attribute

@@ -11,7 +11,7 @@
 
 <meta name="author" content="Lihua Zhang" />
 
-<meta name="date" content="2021-03-07" />
+<meta name="date" content="2021-08-07" />
 
 <title>Demo of DIRECT-NET using parallel scRNA-seq and scATAC-seq data of human A549 cell line</title>
 
@@ -167,7 +167,7 @@ pre code {
 
 <h1 class="title toc-ignore">Demo of DIRECT-NET using parallel scRNA-seq and scATAC-seq data of human A549 cell line</h1>
 <h4 class="author">Lihua Zhang</h4>
-<h4 class="date">03/07/21</h4>
+<h4 class="date">08/07/21</h4>
 
 </div>
 
@@ -294,20 +294,20 @@ combined &lt;- RunPCA(combined, pc.genes = combined@var.genes, pcs.compute = 40,
 #&gt;     GLIS3, TNS3, FMNL2, MBNL2, KLHL4, MKLN1-AS1, TJP3, FGD4, STK32B, NRCAM 
 #&gt;     GALNT18, MYOF, DOCK5, LURAP1L, RP11-420N3.2, LINC00842, CSGALNACT1, CA12, RP11-38O23.4, DST
 combined &lt;- RunUMAP(combined, dims = 1:40)
-#&gt; 14:18:45 UMAP embedding parameters a = 0.9922 b = 1.112
-#&gt; 14:18:45 Read 3260 rows and found 40 numeric columns
-#&gt; 14:18:45 Using Annoy for neighbor search, n_neighbors = 30
-#&gt; 14:18:45 Building Annoy index with metric = cosine, n_trees = 50
+#&gt; 00:17:53 UMAP embedding parameters a = 0.9922 b = 1.112
+#&gt; 00:17:53 Read 3260 rows and found 40 numeric columns
+#&gt; 00:17:53 Using Annoy for neighbor search, n_neighbors = 30
+#&gt; 00:17:53 Building Annoy index with metric = cosine, n_trees = 50
 #&gt; 0%   10   20   30   40   50   60   70   80   90   100%
 #&gt; [----|----|----|----|----|----|----|----|----|----|
 #&gt; **************************************************|
-#&gt; 14:18:46 Writing NN index file to temp file /var/folders/r0/2nqvlbc51q78c1zgfgm7rkd40000gn/T//RtmpTBIGzb/file11bf21b822109
-#&gt; 14:18:46 Searching Annoy index using 1 thread, search_k = 3000
-#&gt; 14:18:46 Annoy recall = 100%
-#&gt; 14:18:48 Commencing smooth kNN distance calibration using 1 thread
-#&gt; 14:18:50 Initializing from normalized Laplacian + noise
-#&gt; 14:18:50 Commencing optimization for 500 epochs, with 143444 positive edges
-#&gt; 14:18:55 Optimization finished</code></pre>
+#&gt; 00:17:54 Writing NN index file to temp file /var/folders/r0/2nqvlbc51q78c1zgfgm7rkd40000gn/T//RtmpFKB1tD/file82043d01c2d6
+#&gt; 00:17:54 Searching Annoy index using 1 thread, search_k = 3000
+#&gt; 00:17:54 Annoy recall = 100%
+#&gt; 00:17:55 Commencing smooth kNN distance calibration using 1 thread
+#&gt; 00:17:58 Initializing from normalized Laplacian + noise
+#&gt; 00:17:58 Commencing optimization for 500 epochs, with 143444 positive edges
+#&gt; 00:18:03 Optimization finished</code></pre>
 </div>
 <div id="atac-analysis" class="section level3">
 <h3>ATAC analysis</h3>
@@ -320,20 +320,20 @@ combined &lt;- RunSVD(combined)
 #&gt; Running SVD
 #&gt; Scaling cell embeddings
 combined &lt;- RunUMAP(combined, reduction = &#39;lsi&#39;, dims = 2:50, reduction.name = &quot;umap.atac&quot;, reduction.key = &quot;atacUMAP_&quot;)
-#&gt; 14:19:10 UMAP embedding parameters a = 0.9922 b = 1.112
-#&gt; 14:19:10 Read 3260 rows and found 49 numeric columns
-#&gt; 14:19:10 Using Annoy for neighbor search, n_neighbors = 30
-#&gt; 14:19:10 Building Annoy index with metric = cosine, n_trees = 50
+#&gt; 00:18:17 UMAP embedding parameters a = 0.9922 b = 1.112
+#&gt; 00:18:17 Read 3260 rows and found 49 numeric columns
+#&gt; 00:18:17 Using Annoy for neighbor search, n_neighbors = 30
+#&gt; 00:18:17 Building Annoy index with metric = cosine, n_trees = 50
 #&gt; 0%   10   20   30   40   50   60   70   80   90   100%
 #&gt; [----|----|----|----|----|----|----|----|----|----|
 #&gt; **************************************************|
-#&gt; 14:19:10 Writing NN index file to temp file /var/folders/r0/2nqvlbc51q78c1zgfgm7rkd40000gn/T//RtmpTBIGzb/file11bf2122171d4
-#&gt; 14:19:10 Searching Annoy index using 1 thread, search_k = 3000
-#&gt; 14:19:11 Annoy recall = 100%
-#&gt; 14:19:12 Commencing smooth kNN distance calibration using 1 thread
-#&gt; 14:19:15 Initializing from normalized Laplacian + noise
-#&gt; 14:19:15 Commencing optimization for 500 epochs, with 147040 positive edges
-#&gt; 14:19:20 Optimization finished
+#&gt; 00:18:17 Writing NN index file to temp file /var/folders/r0/2nqvlbc51q78c1zgfgm7rkd40000gn/T//RtmpFKB1tD/file82041bb73ada
+#&gt; 00:18:17 Searching Annoy index using 1 thread, search_k = 3000
+#&gt; 00:18:18 Annoy recall = 100%
+#&gt; 00:18:19 Commencing smooth kNN distance calibration using 1 thread
+#&gt; 00:18:22 Initializing from normalized Laplacian + noise
+#&gt; 00:18:22 Commencing optimization for 500 epochs, with 147040 positive edges
+#&gt; 00:18:27 Optimization finished
 combined &lt;- FindMultiModalNeighbors(combined, reduction.list = list(&quot;pca&quot;, &quot;lsi&quot;), dims.list = list(1:50, 2:50))
 #&gt; Calculating cell-specific modality weights
 #&gt; Finding 20 nearest neighbors for each modality.
@@ -342,11 +342,11 @@ combined &lt;- FindMultiModalNeighbors(combined, reduction.list = list(&quot;pca
 #&gt; Constructing multimodal KNN graph
 #&gt; Constructing multimodal SNN graph
 combined &lt;- RunUMAP(combined, nn.name = &quot;weighted.nn&quot;, reduction.name = &quot;wnn.umap&quot;, reduction.key = &quot;wnnUMAP_&quot;)
-#&gt; 14:19:27 UMAP embedding parameters a = 0.9922 b = 1.112
-#&gt; 14:19:29 Commencing smooth kNN distance calibration using 1 thread
-#&gt; 14:19:31 Initializing from normalized Laplacian + noise
-#&gt; 14:19:31 Commencing optimization for 500 epochs, with 104206 positive edges
-#&gt; 14:19:37 Optimization finished
+#&gt; 00:18:33 UMAP embedding parameters a = 0.9922 b = 1.112
+#&gt; 00:18:35 Commencing smooth kNN distance calibration using 1 thread
+#&gt; 00:18:37 Initializing from normalized Laplacian + noise
+#&gt; 00:18:37 Commencing optimization for 500 epochs, with 104206 positive edges
+#&gt; 00:18:42 Optimization finished
 Idents(combined) &lt;- combined$celltype</code></pre>
 </div>
 </div>

@@ -159,7 +159,8 @@ for (i in 1:length(groups)) {
     min.pct = 0.2,
     ident.1 = groups[i],
     group.by = "celltype",
-    test.use = 'LR'
+    test.use = 'LR',
+    only.pos = TRUE
   )
   da_peaks_list[[i]] <- da_peaks
 }

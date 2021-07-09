@@ -11,7 +11,7 @@
 
 <meta name="author" content="Lihua Zhang" />
 
-<meta name="date" content="2021-03-07" />
+<meta name="date" content="2021-07-07" />
 
 <title>Demo of DIRECT-NET using parallel scRNA-seq and scATAC-seq data of PBMC</title>
 
@@ -167,7 +167,7 @@ pre code {
 
 <h1 class="title toc-ignore">Demo of DIRECT-NET using parallel scRNA-seq and scATAC-seq data of PBMC</h1>
 <h4 class="author">Lihua Zhang</h4>
-<h4 class="date">03/07/21</h4>
+<h4 class="date">07/07/21</h4>
 
 </div>
 
@@ -275,20 +275,20 @@ pbmc &lt;- RunSVD(pbmc)
 #&gt; Running SVD
 #&gt; Scaling cell embeddings
 pbmc &lt;- RunUMAP(pbmc, reduction = &#39;lsi&#39;, dims = 2:50, reduction.name = &quot;umap.atac&quot;, reduction.key = &quot;atacUMAP_&quot;)
-#&gt; 13:54:52 UMAP embedding parameters a = 0.9922 b = 1.112
-#&gt; 13:54:52 Read 10412 rows and found 49 numeric columns
-#&gt; 13:54:52 Using Annoy for neighbor search, n_neighbors = 30
-#&gt; 13:54:52 Building Annoy index with metric = cosine, n_trees = 50
+#&gt; 23:57:05 UMAP embedding parameters a = 0.9922 b = 1.112
+#&gt; 23:57:05 Read 10412 rows and found 49 numeric columns
+#&gt; 23:57:05 Using Annoy for neighbor search, n_neighbors = 30
+#&gt; 23:57:05 Building Annoy index with metric = cosine, n_trees = 50
 #&gt; 0%   10   20   30   40   50   60   70   80   90   100%
 #&gt; [----|----|----|----|----|----|----|----|----|----|
 #&gt; **************************************************|
-#&gt; 13:54:53 Writing NN index file to temp file /var/folders/r0/2nqvlbc51q78c1zgfgm7rkd40000gn/T//RtmpfQAFbs/file1136d3c227ac9
-#&gt; 13:54:53 Searching Annoy index using 1 thread, search_k = 3000
-#&gt; 13:54:56 Annoy recall = 100%
-#&gt; 13:54:57 Commencing smooth kNN distance calibration using 1 thread
-#&gt; 13:55:00 Initializing from normalized Laplacian + noise
-#&gt; 13:55:00 Commencing optimization for 200 epochs, with 415934 positive edges
-#&gt; 13:55:06 Optimization finished
+#&gt; 23:57:06 Writing NN index file to temp file /var/folders/r0/2nqvlbc51q78c1zgfgm7rkd40000gn/T//Rtmpkynab5/file7a697805a2f7
+#&gt; 23:57:06 Searching Annoy index using 1 thread, search_k = 3000
+#&gt; 23:57:09 Annoy recall = 100%
+#&gt; 23:57:11 Commencing smooth kNN distance calibration using 1 thread
+#&gt; 23:57:13 Initializing from normalized Laplacian + noise
+#&gt; 23:57:13 Commencing optimization for 200 epochs, with 415934 positive edges
+#&gt; 23:57:19 Optimization finished
 pbmc &lt;- FindMultiModalNeighbors(pbmc, reduction.list = list(&quot;pca&quot;, &quot;lsi&quot;), dims.list = list(1:50, 2:50))
 #&gt; Calculating cell-specific modality weights
 #&gt; Finding 20 nearest neighbors for each modality.
@@ -297,11 +297,11 @@ pbmc &lt;- FindMultiModalNeighbors(pbmc, reduction.list = list(&quot;pca&quot;, 
 #&gt; Constructing multimodal KNN graph
 #&gt; Constructing multimodal SNN graph
 pbmc &lt;- RunUMAP(pbmc, nn.name = &quot;weighted.nn&quot;, reduction.name = &quot;wnn.umap&quot;, reduction.key = &quot;wnnUMAP_&quot;)
-#&gt; 13:55:30 UMAP embedding parameters a = 0.9922 b = 1.112
-#&gt; 13:55:31 Commencing smooth kNN distance calibration using 1 thread
-#&gt; 13:55:34 Initializing from normalized Laplacian + noise
-#&gt; 13:55:34 Commencing optimization for 200 epochs, with 308706 positive edges
-#&gt; 13:55:40 Optimization finished
+#&gt; 23:57:43 UMAP embedding parameters a = 0.9922 b = 1.112
+#&gt; 23:57:45 Commencing smooth kNN distance calibration using 1 thread
+#&gt; 23:57:47 Initializing from normalized Laplacian + noise
+#&gt; 23:57:48 Commencing optimization for 200 epochs, with 308706 positive edges
+#&gt; 23:57:54 Optimization finished
 pbmc &lt;- FindClusters(pbmc, graph.name = &quot;wsnn&quot;, algorithm = 3, verbose = FALSE)
 
 # perform sub-clustering on cluster 6 to find additional structure
@@ -457,10 +457,11 @@ for (i in 1:length(groups)) {
   da_peaks &lt;- FindMarkers(
     object = pbmc,
     min.pct = 0.2,
-    logfc.threshold = 1,
+    logfc.threshold = 0.6,
     ident.1 = groups[i],
     group.by = &quot;celltype&quot;,
-    test.use = &#39;LR&#39;
+    test.use = &#39;LR&#39;,
+    only.pos = TRUE
   )
   da_peaks_list[[i]] &lt;- da_peaks
 }
@@ -481,7 +482,7 @@ P_L_TF_record &lt;- generate_peak_TF_links(peaks_bed_list = Focused_CREs$promote
 </div>
 <div id="output-tf-gene-connections" class="section level1">
 <h1>Output TF-gene connections</h1>
-<pre class="r"><code>network_links &lt;- generate_links_for_Cytoscape(L_G_record = CREs_Gene$distal, L_TF_record, P_L_G_record = CREs_Gene$promoter, P_L_TF_record,groups)</code></pre>
+<pre class="r"><code>network_links &lt;- generate_links_for_Cytoscape(L_G_record = Focused_CREs$L_G_record, L_TF_record, P_L_G_record = Focused_CREs$P_L_G_record, P_L_TF_record,groups)</code></pre>
 </div>
 <div id="ouput-node-attribute" class="section level1">
 <h1>Ouput Node attribute</h1>
