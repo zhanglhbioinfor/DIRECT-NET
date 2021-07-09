@@ -155,7 +155,8 @@ generate_CRE <- function(L_G_record, P_L_G_record, da_peaks_list) {
       da_peaks_list[[i]] <- L_G_record[[i]]$loci
     }
   }
-
+  L_G_record_new <- list()
+  P_L_G_record_new <- list()
   for (i in 1:length(L_G_record)) {
     if (!is.null(da_peaks_list[[i]])) {
       if (!is.character(da_peaks_list[[i]])) {
@@ -169,6 +170,8 @@ generate_CRE <- function(L_G_record, P_L_G_record, da_peaks_list) {
 
     DA_HF_i <- intersect(da,L_G_record[[i]]$loci)
     if (length(DA_HF_i) > 0) {
+      L_G_record_new[[i]] <- L_G_record[[i]][which(L_G_record[[i]]$loci %in% DA_HF_i),]
+      overlap_gene <- L_G_record[[i]]$gene[which(L_G_record[[i]]$loci %in% DA_HF_i)]
       peaks1 <- strsplit(DA_HF_i,"_")
       peaks_bed <- matrix(0, nrow = length(DA_HF_i),ncol = 3)
       for (j in 1:length(DA_HF_i)) {
@@ -182,9 +185,12 @@ generate_CRE <- function(L_G_record, P_L_G_record, da_peaks_list) {
       peaks_bed$R.end <- as.numeric(peaks_bed$R.end)
       peaks_bed_record[[i]] <- peaks_bed
       ### promoters
-      peaks2 <- strsplit(P_L_G_record[[i]]$loci,"_")
-      peaks_bed <- matrix(0, nrow = length(P_L_G_record[[i]]$loci),ncol = 3)
-      for (j in 1:length(P_L_G_record[[i]]$loci)) {
+      P_L_G_record_i <- P_L_G_record[[i]]
+      P_L_G_record_i <- P_L_G_record_i[which(P_L_G_record_i$gene %in% overlap_gene),]
+      P_L_G_record_new[[i]] <- P_L_G_record_i
+      peaks2 <- strsplit(P_L_G_record_i$loci,"_")
+      peaks_bed <- matrix(0, nrow = length(P_L_G_record_i$loci),ncol = 3)
+      for (j in 1:length(P_L_G_record_i$loci)) {
         for (k in 1:3) {
           peaks_bed[j,k] <- peaks2[[j]][k]
         }
@@ -199,6 +205,8 @@ generate_CRE <- function(L_G_record, P_L_G_record, da_peaks_list) {
   CREs <- list()
   CREs$distal <- peaks_bed_record
   CREs$promoter <- P_peaks_bed_record
+  CREs$L_G_record <- L_G_record_new
+  CREs$P_L_G_record <- P_L_G_record_new
   return(CREs)
 }
 
