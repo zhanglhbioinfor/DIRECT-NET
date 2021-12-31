@@ -30,6 +30,6 @@ The implementent of DIRECT-NET is now seamlessly compatible with the workflow of
 - [Demo of DIRECT-NET on scATAC-seq data of human Brain](https://htmlpreview.github.io/?https://github.com/amsszlh/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_Brain.html)
 
 ## Help
-If you have any problems, comments or suggestions, please contact us at Lihua Zhang (zhanglihua@amss.ac.cn).
+If you have any problems, comments or suggestions, please contact us at Lihua Zhang (zhanglh@whu.edu.cn).
 
 
