@@ -20,7 +20,7 @@ Plot_connections <- function(DIRECT_NET_Result, gene_anno, marker, cutoff = NULL
     # normalize
     conns$coaccess <- log10(as.numeric(conns$coaccess)*100)
     if (is.null(cutoff)) {
-      cutoff = max(0,max(conns$coaccess[which(DIRECT_NET_Result$type == "Rest")]))
+      cutoff = max(0,max(conns$coaccess[which(DIRECT_NET_Result$type == "MC")]))
     }
     plot_connections(conns, DIRECT_NET_Result$Chr[1], as.numeric(DIRECT_NET_Result$Starts[1])-upstream, as.numeric(DIRECT_NET_Result$Starts[1])+downstream,
                      gene_model = gene_anno,

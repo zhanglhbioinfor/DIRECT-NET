@@ -113,7 +113,7 @@ get_TF_G <- function(L_G_record,L_TF_record,groups) {
 
 generate_CRE_Gene_links <- function(direct.net_result, markers) {
   # loci_gene corresponding relationship
-  direct.net_result_CRE <- direct.net_result[which(direct.net_result$function_type == "HF"), , drop = FALSE]
+  direct.net_result_CRE <- direct.net_result[which(direct.net_result$function_type == "HC"), , drop = FALSE]
   L_G_record <- list()
   P_L_G_record <- list() # promoter-gene
   uniqgroups <- unique(markers$group)
@@ -168,13 +168,13 @@ generate_CRE <- function(L_G_record, P_L_G_record, da_peaks_list) {
       da <- gsub("-","_",da)
     }
 
-    DA_HF_i <- intersect(da,L_G_record[[i]]$loci)
-    if (length(DA_HF_i) > 0) {
-      L_G_record_new[[i]] <- L_G_record[[i]][which(L_G_record[[i]]$loci %in% DA_HF_i),]
-      overlap_gene <- L_G_record[[i]]$gene[which(L_G_record[[i]]$loci %in% DA_HF_i)]
-      peaks1 <- strsplit(DA_HF_i,"_")
-      peaks_bed <- matrix(0, nrow = length(DA_HF_i),ncol = 3)
-      for (j in 1:length(DA_HF_i)) {
+    DA_HC_i <- intersect(da,L_G_record[[i]]$loci)
+    if (length(DA_HC_i) > 0) {
+      L_G_record_new[[i]] <- L_G_record[[i]][which(L_G_record[[i]]$loci %in% DA_HC_i),]
+      overlap_gene <- L_G_record[[i]]$gene[which(L_G_record[[i]]$loci %in% DA_HC_i)]
+      peaks1 <- strsplit(DA_HC_i,"_")
+      peaks_bed <- matrix(0, nrow = length(DA_HC_i),ncol = 3)
+      for (j in 1:length(DA_HC_i)) {
         for (k in 1:3) {
           peaks_bed[j,k] <- peaks1[[j]][k]
         }

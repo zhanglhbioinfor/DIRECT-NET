@@ -414,8 +414,10 @@ dmode <- function(x, breaks="Sturges") {
 #' @param genome.info the TSS information of genome, e.g. hg19, hg38
 #' @param focus_markers the focused genes
 #' @param params the list of parameters used in Xgboost
-#' @param HF_cutoff the threshold of high functional CREs
-#' @param LF_cutoff the threshold of low functional CREs
+#' @param early_stop Logical, whether use early stop rule on validation data to reduce overfitting
+#' @param HC_cutoff the threshold of high functional CREs
+#' @param LC_cutoff the threshold of low functional CREs
+#' @param rescued Logical, whether to rescue highly correlated CREs
 #' @param seed Random seed
 #' @param verbose Logical, should warning and info messages be printed
 #' @import Signac
@@ -427,7 +429,7 @@ dmode <- function(x, breaks="Sturges") {
 #' @importFrom cicero find_overlapping_coordinates
 #' @return a Seurat object with new links assay.
 #' @export
-Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragments = NULL, k_neigh = 50, atacbinary = TRUE, max_overlap=0.8, genome.info, focus_markers, params = NULL,HF_cutoff = NULL, LF_cutoff = NULL, seed = 123, verbose = TRUE) {
+Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragments = NULL, k_neigh = 50, atacbinary = TRUE, max_overlap=0.8, genome.info, focus_markers, params = NULL, early_stop = FALSE, HC_cutoff = NULL, LC_cutoff = NULL, rescued = FALSE,seed = 123, verbose = TRUE) {
     ########################################################### step 0. Peak calling
     
     if(peakcalling) {
@@ -579,18 +581,58 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
       Y <- as.matrix(Y)
       Z <- as.matrix(Z)
       rownames(Z) <- rownames(Y)
-      set.seed(seed)
-      # train final model
-      xgb.fit.final <- xgboost(
-        params = params,
-        data = t(X),
-        label = as.numeric(Z),
-        nrounds = 100,
-        objective = "reg:squarederror",
-        verbose = 0
-      )
-      TXs[[i]] <- X
-      TYs[[i]] <- Y
+      ### whether use early stop rule
+      if (early_stop) {
+        if (length(size_factor)/5 < 100) {
+          message("The number of cells is too small to split!")
+        }
+        set.seed(seed)
+        cv_idx <- sample(1:5, size=length(size_factor), replace=T)
+        test_idx <- which(cv_idx == 1)
+        validation_idx <- which(cv_idx == 2)
+        x_train <- as.matrix(X[,-c(test_idx,validation_idx)])
+        x_test <- as.matrix(X[,test_idx])
+        x_validation <- as.matrix(X[,validation_idx])
+        y_train <- Y[-c(test_idx,validation_idx)]
+        y_test <- Y[test_idx]
+        y_validation <- Y[validation_idx]
+        
+        dtrain = xgb.DMatrix(data=t(x_train), label = as.numeric(y_train))
+        dtest = xgb.DMatrix(data=t(x_test), label= as.numeric(y_test))
+        dvalidation = xgb.DMatrix(data=t(x_validation), label= as.numeric(y_validation))
+        watchlist1 = list(train=dtrain, test=dvalidation)
+        watchlist2 = list(train=dtrain, test=dtest)
+        xgb_v <- xgb.train(params = params,
+                           data = dtrain,
+                           watchlist = watchlist1,
+                           nrounds = 100,
+                           objective = "reg:linear",
+                           verbose = 0)
+        cv1 <- xgb_v$evaluation_log
+        rmse_d <- cv1$test_rmse-cv1$train_rmse
+        rmse_dd <- abs(rmse_d[2:100]-rmse_d[1:99])/rmse_d[1]
+        stop_index <- which(rmse_dd == min(rmse_dd))
+        # train final model
+        xgb.fit.final <- xgboost(
+          params = params,
+          data = t(X),
+          label = as.numeric(Z),
+          nrounds = stop_index[1],
+          objective = "reg:squarederror",
+          verbose = 0
+        ) 
+        } else {
+        # train final model
+        xgb.fit.final <- xgboost(
+          params = params,
+          data = t(X),
+          label = as.numeric(Z),
+          nrounds = 100,
+          objective = "reg:squarederror",
+          verbose = 0
+        )
+      }
+     
       # create importance matrix
       tryCatch({
         importance_matrix <- xgb.importance(model = xgb.fit.final)
@@ -613,34 +655,43 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
   }
   conns <- do.call(rbind,DIRECT_NET_Result)
   ######################### variable selection ###########
-  if (is.null(HF_cutoff)) {
-    HF_cutoff = max(stats::quantile(conns$Importance,0.50),0.001)
+  if (is.null(HC_cutoff)) {
+    HC_cutoff = max(stats::quantile(conns$Importance,0.50),0.001)
   }
-  if (is.null(LF_cutoff)) {
-    LF_cutoff = min(0.001,stats::quantile(conns$Importance,0.25))
+  if (is.null(LC_cutoff)) {
+    LC_cutoff = min(0.001,stats::quantile(conns$Importance,0.25))
   }
   for (i in 1:length(DIRECT_NET_Result)) {
     if (!is.null(DIRECT_NET_Result[[i]])) {
       conns_h <- DIRECT_NET_Result[[i]]
       Imp_value <- conns_h$Importance
-      index1 <- which(Imp_value > HF_cutoff) # HF
-      index2 <- intersect(which(Imp_value > LF_cutoff), which(Imp_value <= HF_cutoff)) # Rest
-      index3 <- which(Imp_value <= LF_cutoff) # LF
+      index1 <- which(Imp_value > HC_cutoff) # HC
+      index2 <- intersect(which(Imp_value > LC_cutoff), which(Imp_value <= HC_cutoff)) # MC
+      index3 <- which(Imp_value <= LC_cutoff) # LC
 
       #### do data frame:gene, starts, end, peak1,peak2,importance,function_type
       function_type <- rep(NA, length(Imp_value))
-      function_type[index1] <- "HF"
-      function_type[index2] <- "Rest"
-      function_type[index3] <- "LF"
-      # add peaks with importance scores equaling 0
-      X <- TXs[[i]]
-      Y <- TYs[[i]]
-      peak0 <- setdiff(rownames(X), as.character(conns_h$Peak2))
-      if (length(peak0) > 0) {
-        zero_peak <- data.frame(Peak1 = rownames(Y),Peak2 = peak0, Importance = 0)
-        colnames(zero_peak) <- c("Peak1","Peak2","Importance")
-        conns_h <- rbind(conns_h,zero_peak)
-        function_type <- c(function_type, rep("ZR",length(peak0)))
+      function_type[index1] <- "HC"
+      function_type[index2] <- "MC"
+      function_type[index3] <- "LC"
+      # rescue highly correlated CREs
+      if (rescued) {
+        X <- TXs[[i]]
+        Y <- TYs[[i]]
+        CPi <- abs(cor(t(X)))
+        for (p in 1:nrow(CPi)) {
+          CPi[p,p] <- 0
+        }
+        # focus on HC rows
+        hic_index <- which(rownames(X) %in% conns_h$Peak2[index1])
+        other_index <- which(rownames(X) %in% conns_h$Peak2[-index1])
+        CPi_sub <- CPi[hic_index, other_index, drop = FALSE]
+        flag_matrix <- matrix(0,nrow = nrow(CPi_sub), ncol = ncol(CPi_sub))
+        flag_matrix[which(CPi_sub > 0.25)] <- 1
+        correlated_index <- which(colSums(flag_matrix) > 0)
+        if (!is.null(correlated_index)) {
+          function_type[conns_h$Peak2 %in% rownames(X)[other_index[correlated_index]]] <- "HC"
+        }
       }
       DIRECT_NET_Result[[i]] <- cbind(data.frame(gene = focus_markers[i], Chr = Chr[i], Starts = Starts[i], Ends = Ends[i]),cbind(conns_h,function_type = function_type))
     }
