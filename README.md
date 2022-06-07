@@ -9,7 +9,7 @@ To make it easy to run DIRECT-NET in most common scRNA-seq and scATAC-seq data a
 DIRECT-NET R package can then be easily installed from Github using devtools:  
 
 ```
-devtools::install_github("amsszlh/DIRECTNET")
+devtools::install_github("zhanglhbioinfor/DIRECT-NET")
 ```
  
 ### Installation of other dependencies
