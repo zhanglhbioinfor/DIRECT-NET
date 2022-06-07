@@ -6,6 +6,9 @@
 \usage{
 Run_DIRECT_NET(
   object,
+  peakcalling = FALSE,
+  macs2.path = NULL,
+  fragments = NULL,
   k_neigh = 50,
   atacbinary = TRUE,
   max_overlap = 0.8,
@@ -13,14 +16,22 @@ Run_DIRECT_NET(
   genome.info,
   focus_markers,
   params = NULL,
-  HF_cutoff = NULL,
-  LF_cutoff = NULL,
+  early_stop = FALSE,
+  HC_cutoff = NULL,
+  LC_cutoff = NULL,
+  rescued = FALSE,
   seed = 123,
   verbose = TRUE
 )
 }
 \arguments{
 \item{object}{Seurat object.}
+
+\item{peakcalling}{call peak}
+
+\item{macs2.path}{path to macs2}
+
+\item{fragments}{fragments file}
 
 \item{k_neigh}{Number of cells to aggregate per group.}
 
@@ -36,9 +47,13 @@ Run_DIRECT_NET(
 
 \item{params}{the list of parameters used in Xgboost}
 
-\item{HF_cutoff}{the threshold of high functional CREs}
+\item{early_stop}{Logical, whether use early stop rule on validation data to reduce overfitting}
 
-\item{LF_cutoff}{the threshold of low functional CREs}
+\item{HC_cutoff}{the threshold of high functional CREs}
+
+\item{LC_cutoff}{the threshold of low functional CREs}
+
+\item{rescued}{Logical, whether to rescue highly correlated CREs}
 
 \item{seed}{Random seed}
 
