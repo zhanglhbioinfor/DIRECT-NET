@@ -132,7 +132,7 @@ pbmc <- RenameIdents(pbmc, '0' = 'CD14 Mono', '9' ='CD14 Mono', '5' = 'CD16 Mono
 pbmc <- RenameIdents(pbmc, '17' = 'Naive B', '11' = 'Intermediate B', '10' = 'Memory B', '21' = 'Plasma')
 pbmc <- RenameIdents(pbmc, '7' = 'NK')
 pbmc <- RenameIdents(pbmc, '4' = 'CD4 TEM', '13'= "CD4 TCM", '3' = "CD4 TCM", '16' ="Treg", '1' ="CD4 Naive", '14' = "CD4 Naive")
-pbmc <- RenameIdents(pbmc, '2' = 'CD8 Naive', '8'= "CD8 Naive", '12' = 'CD8 TEM_1', '6_0' = 'CD8 TEM_2', '6_1' ='CD8 TEM_2','6_4' ='CD8 TEM_2')
+pbmc <- RenameIdents(pbmc, '2' = 'CD8 Naive', '8'= "CD8 Naive", '12' = 'CD8 TEM_1', '6_0' = 'CD8 TEM_2', '6_1' ='CD8 TEM_2')
 pbmc <- RenameIdents(pbmc, '18' = 'MAIT')
 pbmc <- RenameIdents(pbmc, '6_2' ='gdT', '6_3' = 'gdT')
 
@@ -164,7 +164,7 @@ markers_groups <- unique(unlist(markers_groups))
 # Part II: Infer CREs using DIRECT-NET
 ```{r,warning=FALSE}
 # For example, infer links for markers: GLB1, TAF1B
-pbmc <- Run_DIRECT_NET(pbmc, k_neigh = 50, atacbinary = TRUE, max_overlap=0.5, size_factor_normalize = FALSE, genome.info, focus_markers = c("GLB1","TAF1B"))
+pbmc <- Run_DIRECT_NET(pbmc, peakcalling = FALSE, k_neigh = 50, atacbinary = TRUE, max_overlap=0.5, size_factor_normalize = FALSE, genome.info = genome.info, focus_markers = c("GLB1","TAF1B"))
 direct.net_result <- Misc(pbmc, slot = 'direct.net')
 direct.net_result <- as.data.frame(do.call(cbind,direct.net_result)) # links for markers
 
