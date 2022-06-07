@@ -411,6 +411,7 @@ dmode <- function(x, breaks="Sturges") {
 #' @param k_neigh Number of cells to aggregate per group.
 #' @param atacbinary Logical, should accessibility values be binarized
 #' @param max_overlap The maximum overlapping ratio of two groups.
+#' @param size_factor_normalize Logical, should accessibility values be normalized by size factor
 #' @param genome.info the TSS information of genome, e.g. hg19, hg38
 #' @param focus_markers the focused genes
 #' @param params the list of parameters used in Xgboost
@@ -429,7 +430,7 @@ dmode <- function(x, breaks="Sturges") {
 #' @importFrom cicero find_overlapping_coordinates
 #' @return a Seurat object with new links assay.
 #' @export
-Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragments = NULL, k_neigh = 50, atacbinary = TRUE, max_overlap=0.8, genome.info, focus_markers, params = NULL, early_stop = FALSE, HC_cutoff = NULL, LC_cutoff = NULL, rescued = FALSE,seed = 123, verbose = TRUE) {
+Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragments = NULL, k_neigh = 50, atacbinary = TRUE, max_overlap=0.8, size_factor_normalize = TRUE, genome.info, focus_markers, params = NULL, early_stop = FALSE, HC_cutoff = NULL, LC_cutoff = NULL, rescued = FALSE,seed = 123, verbose = TRUE) {
     ########################################################### step 0. Peak calling
     
     if(peakcalling) {
