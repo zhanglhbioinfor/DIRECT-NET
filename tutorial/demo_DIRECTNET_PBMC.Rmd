@@ -170,6 +170,10 @@ direct.net_result <- as.data.frame(do.call(cbind,direct.net_result)) # links for
 
 # We have run DIRECT-NET on all markers, load the results for downstream network analysis
 load("/Users/lihuazhang/Documents/DIRECT-NET/PBMC/Data/PBMC_direct.net.RData")
+# check the function type name
+direct.net_result$function_type <- gsub("HF","HC",direct.net_result$function_type)
+direct.net_result$function_type <- gsub("Rest","MC",direct.net_result$function_type)
+direct.net_result$function_type <- gsub("LF","LC",direct.net_result$function_type)
 ```
 
 # Part III: Visualize the links
