@@ -180,6 +180,10 @@ for (i in 1:length(groups)) {
 ```{r, message=FALSE,warning=FALSE}
 # We have inferred links for all differential genes ( set focus_markers to features.rna)
 load("/Users/lihuazhang/Documents/DIRECT-NET/A549/Data/A549_direct.net.RData")
+# check the function type name
+direct.net_result$function_type <- gsub("HF","HC",direct.net_result$function_type)
+direct.net_result$function_type <- gsub("Rest","MC",direct.net_result$function_type)
+direct.net_result$function_type <- gsub("LF","LC",direct.net_result$function_type)
 # CRE-gene connections
 CREs_Gene <- generate_CRE_Gene_links(direct.net_result, markers)
 # Find focused CREs which is overlapped with DA

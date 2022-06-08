@@ -100,7 +100,7 @@ sci <- FindClusters(object = sci, verbose = FALSE, algorithm = 3, resolution = 0
 
 # Part II: Infer CREs using DIRECT-NET
 ```{r,warning=FALSE}
-sci <- Run_DIRECT_NET(sci, k_neigh = 50, atacbinary = TRUE, max_overlap=0.5, size_factor_normalize = TRUE, genome.info, focus_markers = focus_markers[1:5])
+sci <- Run_DIRECT_NET(sci, peakcalling = FALSE, k_neigh = 50, atacbinary = TRUE, max_overlap=0.5, size_factor_normalize = TRUE, genome.info = genome.info, focus_markers = focus_markers[1:5])
 direct.net_result <- Misc(sci, slot = 'direct.net')
 direct.net_result <- as.data.frame(do.call(cbind,direct.net_result))
 
