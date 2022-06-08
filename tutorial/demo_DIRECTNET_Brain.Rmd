@@ -49,13 +49,13 @@ The scATAC-seq datasets we demonstrated here can be downloaded via this shared G
 
 ```{r}
 library(SummarizedExperiment)
-Data <- readRDS(file = "/Users/suoqinjin/Downloads/DIRECTNET/Brain/Data/GSE147672_200324_Brain_scATAC_SummarizedExperiment_forGEO")
+Data <- readRDS(file = "/Users/lihuazhang/Documents/DIRECT-NET/Brain/Data/GSE147672_200324_Brain_scATAC_SummarizedExperiment_forGEO")
 counts <- assay(Data, "counts")
 counts <- counts[which(rowSums(counts) > 1000),]
 meta = as.data.frame(colData(Data))
 # import low dimension data and cluster information
 library(readxl)
-Umap_info <- read_excel("/Users/suoqinjin/Downloads/DIRECTNET/Brain/Data/41588_2020_721_MOESM5_ESM.xlsx",skip = 21)
+Umap_info <- read_excel("/Users/lihuazhang/Documents/DIRECT-NET/Brain/Data/41588_2020_721_MOESM5_ESM.xlsx",skip = 21)
 #head(Umap_info)
 cell_coord <- cbind(Umap_info$UMAP_dim1,Umap_info$UMAP_dim2)
 #head(cell_coord)
@@ -76,7 +76,7 @@ counts <- counts[,index]
 meta <- meta[index,]
 meta$celltype <- group_new[index]
 
-genome.info <- read.table(file = "/Users/suoqinjin/Downloads/DIRECTNET/Brain/Data/hg38.promoter.regions.txt")
+genome.info <- read.table(file = "/Users/lihuazhang/Documents/DIRECT-NET/Brain/Data/hg38.promoter.regions.txt")
 names(genome.info) <- c("Chrom","Starts","Ends","genes")
 genes <- lapply(genome.info$genes, function(x) strsplit(x,"[|]")[[1]][1])
 genes <- lapply(genes, function(x) strsplit(x,"[.]")[[1]][1])
@@ -85,7 +85,7 @@ genome.info$genes <- genes
 unik <- !duplicated(genes)# filter out different transcript
 genome.info <- genome.info[unik,]
 
-markers <- read.table("/Users/suoqinjin/Downloads/DIRECTNET/Brain/Data/Brain_markers.txt", sep = "\t")
+markers <- read.table("/Users/lihuazhang/Documents/DIRECT-NET/Brain/Data/Brain_markers.txt", sep = "\t")
 markers <- data.frame(gene = markers$gene, group = markers$cluster)
 c <- unique(markers$group)
 marker_list <- list()
@@ -123,11 +123,15 @@ combined@reductions$umap@cell.embeddings <- cell_coord
 
 # Part II: Infer CREs using DIRECT-NET
 ```{r,message=FALSE,warning=FALSE}
-combined <- Run_DIRECT_NET(combined, k_neigh = 50, atacbinary = TRUE, max_overlap=0.5, size_factor_normalize = TRUE, genome.info, focus_markers = "FEV")
+combined <- Run_DIRECT_NET(combined, peakcalling = FALSE, k_neigh = 50, atacbinary = TRUE, max_overlap=0.5, size_factor_normalize = TRUE, genome.info = genome.info, focus_markers = "FEV")
 direct.net_result <- Misc(combined, slot = 'direct.net')
 direct.net_result <- as.data.frame(do.call(cbind,direct.net_result))
 # We have run DIRECT-NET on all markers, load the results for downstream network analysis
-load("/Users/suoqinjin/Downloads/DIRECTNET/Brain/Data/Brain_direct.net.RData")
+load("/Users/lihuazhang/Documents/DIRECT-NET/Brain/Data/Brain_direct.net.RData")
+# check the function type name
+direct.net_result$function_type <- gsub("HF","HC",direct.net_result$function_type)
+direct.net_result$function_type <- gsub("Rest","MC",direct.net_result$function_type)
+direct.net_result$function_type <- gsub("LF","LC",direct.net_result$function_type)
 ```
 
 # Part III: Visualize the links
