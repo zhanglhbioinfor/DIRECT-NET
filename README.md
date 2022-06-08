@@ -21,13 +21,13 @@ The implementent of DIRECT-NET is now seamlessly compatible with the workflow of
 
 ## Examples
 
-- [Demo of DIRECT-NET on parallel scRNA-seq and scATAC-seq data of PBMC](https://htmlpreview.github.io/?https://github.com/amsszlh/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_PBMC.html)
+- [Demo of DIRECT-NET on parallel scRNA-seq and scATAC-seq data of PBMC](https://htmlpreview.github.io/?https://github.com/zhanglhbioinfor/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_PBMC.html)
 
-- [Demo of DIRECT-NET on parallel scRNA-seq and scATAC-seq data of A549](https://htmlpreview.github.io/?https://github.com/amsszlh/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_A549.html)
+- [Demo of DIRECT-NET on parallel scRNA-seq and scATAC-seq data of A549](https://htmlpreview.github.io/?https://github.com/zhanglhbioinfor/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_A549.html)
 
-- [Demo of DIRECT-NET on scATAC-seq data of GM12878](https://htmlpreview.github.io/?https://github.com/amsszlh/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_GM12878.html)
+- [Demo of DIRECT-NET on scATAC-seq data of GM12878](https://htmlpreview.github.io/?https://github.com/zhanglhbioinfor/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_GM12878.html)
 
-- [Demo of DIRECT-NET on scATAC-seq data of human Brain](https://htmlpreview.github.io/?https://github.com/amsszlh/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_Brain.html)
+- [Demo of DIRECT-NET on scATAC-seq data of human Brain](https://htmlpreview.github.io/?https://github.com/zhanglhbioinfor/DIRECT-NET/blob/main/tutorial/demo_DIRECTNET_Brain.html)
 
 ## Help
 If you have any problems, comments or suggestions, please contact us at Lihua Zhang (zhanglh@whu.edu.cn).
