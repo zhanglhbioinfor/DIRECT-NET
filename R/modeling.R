@@ -466,7 +466,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
   if ("aggregated.data" %in% names(Misc(object))) {
     agg.data <- Misc(object, slot = 'aggregated.data')
   } else {
-    agg.data <- Aggregate_data(object)
+    agg.data <- Aggregate_data(object, k_neigh, atacbinary, max_overlap, size_factor_normalize, seed, verbose)
     Misc(object, slot = 'aggregated.data') <- agg.data
   }
 
