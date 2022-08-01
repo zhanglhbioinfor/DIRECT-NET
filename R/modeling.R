@@ -498,7 +498,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
     rna <- rownames(data_rna)
     rna <- lapply(rna, function(x) strsplit(x,"[.]")[[1]][1])
     rna <- unlist(rna)
-    rna <-toupper(rna)
+    #rna <-toupper(rna)
     rownames(data_rna) <- rna
     unik <- !duplicated(rna)# filter out different transcript
     data_rna <- data_rna[unik,]
@@ -542,7 +542,10 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
 
     ########## build data matrix of each gene used in gbm model ##########
     if ("rna" %in% names(agg.data)) {
-      idx <- which(rownames(data_rna) == focus_markers[i])
+      idx_1 <- which(rownames(data_rna) == focus_markers[i])
+      idx_2 <- which(rownames(data_rna) == toupper(focus_markers[i]))
+      idx_3 <- which(toupper(rownames(data_rna)) == focus_markers[i])
+      idx <- union(idx_1,union(idx_2,idx_3))
     } else {
       idx <- 1
     }
@@ -571,7 +574,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
       flag <- 1
     } else {
       flag <- 0
-      message(paste0("There are less than two peaks detected within 500 kb for ",focus_markers[i]))
+      message(paste0("There are less than two peaks detected within 500 kb or no peaks detected within 500 bp upstream of TSS for ",focus_markers[i]))
     }
 
     if (flag == 1) {
