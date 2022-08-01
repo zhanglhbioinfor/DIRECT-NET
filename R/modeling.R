@@ -512,6 +512,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
   genes <- lapply(genome.info$genes, function(x) strsplit(x,"[|]")[[1]][1])
   genes <- lapply(genes, function(x) strsplit(x,"[.]")[[1]][1])
   genes <- unlist(genes)
+  #rna <-toupper(rna)
   genome.info$genes <- genes
   unik <- !duplicated(genes)
   genome.info <- genome.info[unik,]
@@ -542,10 +543,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
 
     ########## build data matrix of each gene used in gbm model ##########
     if ("rna" %in% names(agg.data)) {
-      idx_1 <- which(rownames(data_rna) == focus_markers[i])
-      idx_2 <- which(rownames(data_rna) == toupper(focus_markers[i]))
-      idx_3 <- which(toupper(rownames(data_rna)) == focus_markers[i])
-      idx <- union(idx_1,union(idx_2,idx_3))
+      idx <- which(rownames(data_rna) == focus_markers[i])
     } else {
       idx <- 1
     }
@@ -654,7 +652,9 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
 
       }, error = function(e){
       })
-      DIRECT_NET_Result[[i]] <- conns_h
+      if (!is.null(conns_h)) {
+          DIRECT_NET_Result[[i]] <- conns_h
+      }
     }
   }
   conns <- do.call(rbind,DIRECT_NET_Result)
