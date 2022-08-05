@@ -570,6 +570,15 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
         Z <- Y
       }
       flag <- 1
+      # check the empty rows of X and Z
+      rsX = rowSums(X)
+      rsZ = rowSums(Z)
+      if (length(which(rsX > 0)) > 1 && rsZ > 0) {
+         flag = 1
+        } else {
+           flag <- 0
+           message(paste0("Dropout exists in ",focus_markers[i]))
+      }
     } else {
       flag <- 0
       message(paste0("There are less than two peaks detected within 500 kb or no peaks detected within 500 bp upstream of TSS for ",focus_markers[i]))
