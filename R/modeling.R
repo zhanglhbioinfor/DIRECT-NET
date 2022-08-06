@@ -196,7 +196,7 @@ generate_aggregated_data <- function (object, cell_coord, k_neigh = 50, atacbina
 estimateSizeFactorsForMatrix <- function(counts, locfunc = median, round_exprs=TRUE,  method="mean-geometric-mean-total")
 {
   #library("slam")
-  if (isSparseMatrix(counts)){
+  if (isSparseMatrix(counts)[1]){
     estimateSizeFactorsForSparseMatrix(counts, locfunc = locfunc, round_exprs=round_exprs, method=method)
   }else{
     estimateSizeFactorsForDenseMatrix(counts, locfunc = locfunc, round_exprs=round_exprs,  method=method)
@@ -574,7 +574,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
       rsX = rowSums(X)
       rsZ = rowSums(Z)
       if (length(which(rsX > 0)) > 1 && rsZ > 0) {
-         flag = 1
+         flag <- 1
         } else {
            flag <- 0
            message(paste0("Dropout exists in ",focus_markers[i]))
