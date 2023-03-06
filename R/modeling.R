@@ -196,7 +196,7 @@ generate_aggregated_data <- function (object, cell_coord, k_neigh = 50, atacbina
 estimateSizeFactorsForMatrix <- function(counts, locfunc = median, round_exprs=TRUE,  method="mean-geometric-mean-total")
 {
   #library("slam")
-  if (isSparseMatrix(counts)[1]){
+  if (isSparseMatrix(counts)){
     estimateSizeFactorsForSparseMatrix(counts, locfunc = locfunc, round_exprs=round_exprs, method=method)
   }else{
     estimateSizeFactorsForDenseMatrix(counts, locfunc = locfunc, round_exprs=round_exprs,  method=method)
@@ -411,7 +411,6 @@ dmode <- function(x, breaks="Sturges") {
 #' @param k_neigh Number of cells to aggregate per group.
 #' @param atacbinary Logical, should accessibility values be binarized
 #' @param max_overlap The maximum overlapping ratio of two groups.
-#' @param size_factor_normalize Logical, should accessibility values be normalized by size factor
 #' @param genome.info the TSS information of genome, e.g. hg19, hg38
 #' @param focus_markers the focused genes
 #' @param params the list of parameters used in Xgboost
@@ -430,7 +429,7 @@ dmode <- function(x, breaks="Sturges") {
 #' @importFrom cicero find_overlapping_coordinates
 #' @return a Seurat object with new links assay.
 #' @export
-Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragments = NULL, k_neigh = 50, atacbinary = TRUE, max_overlap=0.8, size_factor_normalize = TRUE, genome.info, focus_markers, params = NULL, early_stop = FALSE, HC_cutoff = NULL, LC_cutoff = NULL, rescued = FALSE,seed = 123, verbose = TRUE) {
+Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragments = NULL, k_neigh = 50, atacbinary = TRUE, max_overlap=0.8, genome.info, focus_markers, params = NULL, early_stop = FALSE, HC_cutoff = NULL, LC_cutoff = NULL, rescued = FALSE,seed = 123, verbose = TRUE) {
     ########################################################### step 0. Peak calling
     
     if(peakcalling) {
@@ -466,7 +465,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
   if ("aggregated.data" %in% names(Misc(object))) {
     agg.data <- Misc(object, slot = 'aggregated.data')
   } else {
-    agg.data <- Aggregate_data(object, k_neigh, atacbinary, max_overlap, size_factor_normalize, seed, verbose)
+    agg.data <- Aggregate_data(object)
     Misc(object, slot = 'aggregated.data') <- agg.data
   }
 
@@ -498,7 +497,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
     rna <- rownames(data_rna)
     rna <- lapply(rna, function(x) strsplit(x,"[.]")[[1]][1])
     rna <- unlist(rna)
-    #rna <-toupper(rna)
+    rna <-toupper(rna)
     rownames(data_rna) <- rna
     unik <- !duplicated(rna)# filter out different transcript
     data_rna <- data_rna[unik,]
@@ -512,7 +511,6 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
   genes <- lapply(genome.info$genes, function(x) strsplit(x,"[|]")[[1]][1])
   genes <- lapply(genes, function(x) strsplit(x,"[.]")[[1]][1])
   genes <- unlist(genes)
-  #rna <-toupper(rna)
   genome.info$genes <- genes
   unik <- !duplicated(genes)
   genome.info <- genome.info[unik,]
@@ -570,18 +568,9 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
         Z <- Y
       }
       flag <- 1
-      # check the empty rows of X and Z
-      rsX = rowSums(X)
-      rsZ = rowSums(Z)
-      if (length(which(rsX > 0)) > 1 && rsZ > 0) {
-         flag <- 1
-        } else {
-           flag <- 0
-           message(paste0("Dropout exists in ",focus_markers[i]))
-      }
     } else {
       flag <- 0
-      message(paste0("There are less than two peaks detected within 500 kb or no peaks detected within 500 bp upstream of TSS for ",focus_markers[i]))
+      message(paste0("There are less than two peaks detected within 500 kb for ",focus_markers[i]))
     }
 
     if (flag == 1) {
@@ -661,9 +650,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
 
       }, error = function(e){
       })
-      if (!is.null(conns_h)) {
-          DIRECT_NET_Result[[i]] <- conns_h
-      }
+      DIRECT_NET_Result[[i]] <- conns_h
     }
   }
   conns <- do.call(rbind,DIRECT_NET_Result)
@@ -689,22 +676,24 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
       function_type[index3] <- "LC"
       # rescue highly correlated CREs
       if (rescued) {
-        X <- TXs[[i]]
-        Y <- TYs[[i]]
-        CPi <- abs(cor(t(X)))
-        for (p in 1:nrow(CPi)) {
-          CPi[p,p] <- 0
-        }
-        # focus on HC rows
-        hic_index <- which(rownames(X) %in% conns_h$Peak2[index1])
-        other_index <- which(rownames(X) %in% conns_h$Peak2[-index1])
-        CPi_sub <- CPi[hic_index, other_index, drop = FALSE]
-        flag_matrix <- matrix(0,nrow = nrow(CPi_sub), ncol = ncol(CPi_sub))
-        flag_matrix[which(CPi_sub > 0.25)] <- 1
-        correlated_index <- which(colSums(flag_matrix) > 0)
-        if (!is.null(correlated_index)) {
-          function_type[conns_h$Peak2 %in% rownames(X)[other_index[correlated_index]]] <- "HC"
-        }
+          if (i <= length(TXs)) {
+              X <- TXs[[i]]
+              Y <- TYs[[i]]
+              CPi <- abs(cor(t(X)))
+              for (p in 1:nrow(CPi)) {
+                CPi[p,p] <- 0
+              }
+              # focus on HC rows
+              hic_index <- which(rownames(X) %in% conns_h$Peak2[index1])
+              other_index <- which(rownames(X) %in% conns_h$Peak2[-index1])
+              CPi_sub <- CPi[hic_index, other_index, drop = FALSE]
+              flag_matrix <- matrix(0,nrow = nrow(CPi_sub), ncol = ncol(CPi_sub))
+              flag_matrix[which(CPi_sub > 0.25)] <- 1
+              correlated_index <- which(colSums(flag_matrix) > 0)
+              if (!is.null(correlated_index)) {
+                function_type[conns_h$Peak2 %in% rownames(X)[other_index[correlated_index]]] <- "HC"
+              }
+          }
       }
       DIRECT_NET_Result[[i]] <- cbind(data.frame(gene = focus_markers[i], Chr = Chr[i], Starts = Starts[i], Ends = Ends[i]),cbind(conns_h,function_type = function_type))
     }
