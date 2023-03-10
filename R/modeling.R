@@ -6,6 +6,7 @@
 #' @param k_neigh Number of cells to be aggregated per group.
 #' @param atacbinary Logical, whether the aggregated scATAC-seq data need binary
 #' @param max_overlap The maximum overlapping ratio of two groups.
+#' @param reduction.name The reduction name of extracting the cell coordinates used for aggregating.
 #' @param size_factor_normalize Logical, should accessibility values be normalized by size factor
 #' @param verbose Logical, should warning and info messages be printed?
 #' @param seed Random seed
@@ -13,14 +14,19 @@
 #' @return Aggregated Seurat object.
 #' @export
 #'
-Aggregate_data <- function (object, k_neigh = 50, atacbinary = TRUE, max_overlap=0.8,
+Aggregate_data <- function (object, k_neigh = 50, atacbinary = TRUE, max_overlap=0.8, reduction.name = NULL,
                             size_factor_normalize = TRUE, seed = 123, verbose = TRUE)
 {
-  if ("RNA" %in% names(object@assays)) {
-    cell_coord <- object@reductions$wnn.umap@cell.embeddings
+  if (!is.null(reduction.name)) {
+      cell_coord <- object@reductions[[reduction.name]]
   } else {
-    cell_coord <- object@reductions$umap@cell.embeddings
+      if ("RNA" %in% names(object@assays)) {
+        cell_coord <- object@reductions$wnn.umap@cell.embeddings
+      } else {
+        cell_coord <- object@reductions$umap@cell.embeddings
+      }
   }
+  
 
   group <- as.character(Idents(object))
   uniqgroup <- unique(group)
@@ -411,9 +417,12 @@ dmode <- function(x, breaks="Sturges") {
 #' @param k_neigh Number of cells to aggregate per group.
 #' @param atacbinary Logical, should accessibility values be binarized
 #' @param max_overlap The maximum overlapping ratio of two groups.
+#' @param reduction.name The reduction name of extracting the cell coordinates used for aggregating.
+#' @param size_factor_normalize Logical, whether need to do size normalization
 #' @param genome.info the TSS information of genome, e.g. hg19, hg38
 #' @param focus_markers the focused genes
 #' @param params the list of parameters used in Xgboost
+#' @param nthread  the number of threads can be manually specified in Xgboost trainning stage, default is 2
 #' @param early_stop Logical, whether use early stop rule on validation data to reduce overfitting
 #' @param HC_cutoff the threshold of high functional CREs
 #' @param LC_cutoff the threshold of low functional CREs
@@ -429,7 +438,7 @@ dmode <- function(x, breaks="Sturges") {
 #' @importFrom cicero find_overlapping_coordinates
 #' @return a Seurat object with new links assay.
 #' @export
-Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragments = NULL, k_neigh = 50, atacbinary = TRUE, max_overlap=0.8, genome.info, focus_markers, params = NULL, early_stop = FALSE, HC_cutoff = NULL, LC_cutoff = NULL, rescued = FALSE,seed = 123, verbose = TRUE) {
+Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragments = NULL, k_neigh = 50, atacbinary = TRUE, max_overlap=0.8, reduction.name = NULL, size_factor_normalize = FALSE, genome.info, focus_markers, params = NULL, nthread = 2, early_stop = FALSE, HC_cutoff = NULL, LC_cutoff = NULL, rescued = FALSE,seed = 123, verbose = TRUE) {
     ########################################################### step 0. Peak calling
     
     if(peakcalling) {
@@ -606,6 +615,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
                            data = dtrain,
                            watchlist = watchlist1,
                            nrounds = 100,
+                           nthread = nthread,
                            objective = "reg:linear",
                            verbose = 0)
         cv1 <- xgb_v$evaluation_log
@@ -618,6 +628,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
           data = t(X),
           label = as.numeric(Z),
           nrounds = stop_index[1],
+          nthread = nthread,
           objective = "reg:squarederror",
           verbose = 0
         ) 
@@ -628,6 +639,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
           data = t(X),
           label = as.numeric(Z),
           nrounds = 100,
+          nthread = nthread,
           objective = "reg:squarederror",
           verbose = 0
         )
