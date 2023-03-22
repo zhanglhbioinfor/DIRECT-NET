@@ -26,9 +26,6 @@ Plot_connections(
 
 \item{downstream}{the number of distance downstream to TSS}
 }
-\value{
-
-}
 \description{
 Plot links of DIRECT-NET on focused genes
 }

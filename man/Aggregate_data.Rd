@@ -9,6 +9,7 @@ Aggregate_data(
   k_neigh = 50,
   atacbinary = TRUE,
   max_overlap = 0.8,
+  reduction.name = NULL,
   size_factor_normalize = TRUE,
   seed = 123,
   verbose = TRUE
@@ -22,6 +23,8 @@ Aggregate_data(
 \item{atacbinary}{Logical, whether the aggregated scATAC-seq data need binary}
 
 \item{max_overlap}{The maximum overlapping ratio of two groups.}
+
+\item{reduction.name}{The reduction name of extracting the cell coordinates used for aggregating.}
 
 \item{size_factor_normalize}{Logical, should accessibility values be normalized by size factor}
 
