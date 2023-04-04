@@ -562,13 +562,14 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
       id2 <- id2[!is.na(id2)]
       id2_new <- setdiff(id2,id1)
       X <- data_atac[id2_new,]
+      TXs[[i]] <- X
       Y <- data_atac[id1,]
       if (length(id1) > 1){
         Y <- colSums(Y)
       }
       Y <- t(as.matrix(Y))
       rownames(Y) <- peaks[id1[1]]
-
+      TYs[[i]] <- Y
       if ("rna" %in% names(agg.data)) {
         Z <- data_rna[idx,]
         Z <- t(as.matrix(Z))
@@ -662,7 +663,9 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
 
       }, error = function(e){
       })
-      DIRECT_NET_Result[[i]] <- conns_h
+      if (length(ncol(conns_h))){
+        DIRECT_NET_Result[[i]] <- conns_h
+     }
     }
   }
   conns <- do.call(rbind,DIRECT_NET_Result)
