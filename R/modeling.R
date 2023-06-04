@@ -506,7 +506,7 @@ Run_DIRECT_NET <- function(object,peakcalling = FALSE, macs2.path = NULL, fragme
     rna <- rownames(data_rna)
     rna <- lapply(rna, function(x) strsplit(x,"[.]")[[1]][1])
     rna <- unlist(rna)
-    rna <-toupper(rna)
+    #rna <-toupper(rna)
     rownames(data_rna) <- rna
     unik <- !duplicated(rna)# filter out different transcript
     data_rna <- data_rna[unik,]
